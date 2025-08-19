@@ -1,0 +1,24 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "name": "PowerShell - Launch ps-wslupdate.ps1 Script",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": "${workspaceFolder}/debug/wslUpdateWrapper.ps1",
+            "cwd": "${workspaceFolder}/src/",
+            "args": [
+                "-ScriptPath",
+                "${workspaceFolder}/src/ps-wslupdate.ps1",
+                "-WSLSkipDist",
+                "Ubuntu-24.04;docker-desktop",
+                "-WSLUpdateLog",
+                "${workspaceFolder}/logs/"
+            ],
+        }
+    ]
+}
