@@ -61,25 +61,30 @@ try {
     Write-Error $_
     $exitCode = 1
 }
+
+function Restore-EnvVar {
+    param(
+        [string]$Name,
+        [string]$OldValue
+    )
+    if ($OldValue) {
+        Set-EnvVar $Name $OldValue
+    } else {
+        Remove-EnvVar $Name
+    }
+}
+
 finally {
     # Restore WSL_SKIP_DIST
     if ($PSBoundParameters.ContainsKey('WSLSkipDist')) {
-        if ($oldSkipDist) {
-            Set-EnvVar 'WSL_SKIP_DIST' $oldSkipDist
-        } else {
-            Remove-EnvVar 'WSL_SKIP_DIST'
-        }
+        Restore-EnvVar -Name 'WSL_SKIP_DIST' -OldValue $oldSkipDist
     } elseif ($oldSkipDist) {
         Set-EnvVar 'WSL_SKIP_DIST' $oldSkipDist
     }
 
     # Restore WSL_UPDATE_LOG
     if ($PSBoundParameters.ContainsKey('WSLUpdateLog')) {
-        if ($oldUpdateLog) {
-            Set-EnvVar 'WSL_UPDATE_LOG' $oldUpdateLog
-        } else {
-            Remove-EnvVar 'WSL_UPDATE_LOG'
-        }
+        Restore-EnvVar -Name 'WSL_UPDATE_LOG' -OldValue $oldUpdateLog
     } elseif ($oldUpdateLog) {
         Set-EnvVar 'WSL_UPDATE_LOG' $oldUpdateLog
     }
