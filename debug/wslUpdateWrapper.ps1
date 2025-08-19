@@ -5,10 +5,10 @@ param(
     [string]$WSLUpdateLog
 )
 
+
 function Backup-EnvVar {
     param([string]$Name)
-    $old = [Environment]::GetEnvironmentVariable($Name, 'Process')
-    return $old
+    return [Environment]::GetEnvironmentVariable($Name, 'Process')
 }
 
 function Set-EnvVar {
@@ -21,6 +21,22 @@ function Remove-EnvVar {
     [Environment]::SetEnvironmentVariable($Name, $null, 'Process')
 }
 
+function Replace-EnvVar {
+    param(
+        [string]$Name,
+        [string]$NewValue
+    )
+    $old = Backup-EnvVar $Name
+    if ($PSBoundParameters.ContainsKey('NewValue')) {
+        Set-EnvVar $Name $NewValue
+    } else {
+        if ($old) {
+            Remove-EnvVar $Name
+        }
+    }
+    return $old
+}
+
 # Validate mandatory parameter
 if (-not $ScriptPath) {
     Write-Error 'ScriptPath is required.'
@@ -31,25 +47,12 @@ if (!(Test-Path $ScriptPath)) {
     exit 1
 }
 
+
 # Backup and set WSL_SKIP_DIST
-$oldSkipDist = Backup-EnvVar 'WSL_SKIP_DIST'
-if ($PSBoundParameters.ContainsKey('WSLSkipDist')) {
-    Set-EnvVar 'WSL_SKIP_DIST' $WSLSkipDist
-} else {
-    if ($oldSkipDist) {
-        Remove-EnvVar 'WSL_SKIP_DIST'
-    }
-}
+$oldSkipDist = Replace-EnvVar -Name 'WSL_SKIP_DIST' -NewValue $WSLSkipDist
 
 # Backup and set WSL_UPDATE_LOG
-$oldUpdateLog = Backup-EnvVar 'WSL_UPDATE_LOG'
-if ($PSBoundParameters.ContainsKey('WSLUpdateLog')) {
-    Set-EnvVar 'WSL_UPDATE_LOG' $WSLUpdateLog
-} else {
-    if ($oldUpdateLog) {
-        Remove-EnvVar 'WSL_UPDATE_LOG'
-    }
-}
+$oldUpdateLog = Replace-EnvVar -Name 'WSL_UPDATE_LOG' -NewValue $WSLUpdateLog
 
 try {
     & $ScriptPath
