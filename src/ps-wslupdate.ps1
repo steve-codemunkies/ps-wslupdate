@@ -2,6 +2,8 @@
 # Script to update all WSL distributions except those in the exclusion list.
 # Logs actions and output, manages log retention, and handles encoding issues.
 
+Import-Module "$PSScriptRoot\..\shared\envvars.ps1"
+
 function Get-DateString {
     return (Get-Date -Format 'yyyyMMddHHmmss')
 }
@@ -21,8 +23,10 @@ if (!(Test-Path $logFolder)) {
     exit 1
 }
 
+# Backup and set WSL_UTF8
+$oldWslUtf8 = Replace-EnvVar -Name 'WSL_UTF8' -NewValue 1
+
 # Set output encoding workaround (see StackOverflow link)
-$env:WSL_UTF8=1
 $oldOutputEncoding = [Console]::OutputEncoding
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
@@ -69,4 +73,6 @@ try {
 finally {
     # Restore output encoding
     [Console]::OutputEncoding = $oldOutputEncoding
+    # Restore the old value of WSL_UTF8
+    Restore-EnvVar -Name 'WSL_UTF8' -OldValue $oldWslUtf8
 }
