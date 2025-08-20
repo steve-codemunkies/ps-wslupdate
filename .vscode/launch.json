@@ -15,7 +15,7 @@
                 "-ScriptPath",
                 "${workspaceFolder}/src/ps-wslupdate.ps1",
                 "-WSLSkipDist",
-                "Ubuntu-24.04;docker-desktop",
+                "Ubuntu-24.04:docker-desktop",
                 "-WSLUpdateLog",
                 "${workspaceFolder}/logs/"
             ],

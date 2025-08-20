@@ -8,7 +8,7 @@ function Get-DateString {
 
 # Get exclusion list from environment variable
 $skipDistRaw = [Environment]::GetEnvironmentVariable('WSL_SKIP_DIST')
-$skipDist = if ([string]::IsNullOrWhiteSpace($skipDistRaw)) { @() } else { $skipDistRaw -split ';' }
+$skipDist = if ([string]::IsNullOrWhiteSpace($skipDistRaw)) { @() } else { $skipDistRaw -split ':' }
 
 # Get log folder from environment variable
 $logFolder = [Environment]::GetEnvironmentVariable('WSL_UPDATE_LOG')
@@ -22,6 +22,7 @@ if (!(Test-Path $logFolder)) {
 }
 
 # Set output encoding workaround (see StackOverflow link)
+$env:WSL_UTF8=1
 $oldOutputEncoding = [Console]::OutputEncoding
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
@@ -30,8 +31,12 @@ try {
     $wslList = wsl.exe -l -v | Out-String
     $lines = $wslList -split "`r?`n" | Where-Object { $_.Trim() -ne '' }
     $distros = $lines[1..($lines.Count-1)] | ForEach-Object {
-        $parts = $_ -split '\s{2,}'
-        if ($parts.Count -ge 1) { $parts[0].Trim() } else { $_.Trim() }
+        $line = $_.TrimStart()
+        if ($line.StartsWith('*')) {
+            $line = $line.Substring(1).TrimStart()
+        }
+        $parts = $line -split '\s{2,}'
+        $parts[0].Trim()
     }
 
     foreach ($distro in $distros) {
@@ -50,7 +55,7 @@ try {
         }
         # Run update command in WSL as root
         $logFile = Join-Path $logFolder "$distro $dateStr.log"
-        $updateCmd = "wsl.exe -d '$distro' -u root -- bash -c 'apt update && apt upgrade -y'"
+        $updateCmd = "wsl.exe -d '$distro' -u root -- bash -c 'apt update && echo && apt upgrade -y'"
         $output = Invoke-Expression $updateCmd 2>&1
         $output | Out-File -FilePath $logFile -Encoding UTF8
         # Manage log retention for distro logs

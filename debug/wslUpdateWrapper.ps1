@@ -37,6 +37,18 @@ function Replace-EnvVar {
     return $old
 }
 
+function Restore-EnvVar {
+    param(
+        [string]$Name,
+        [string]$OldValue
+    )
+    if ($OldValue) {
+        Set-EnvVar $Name $OldValue
+    } else {
+        Remove-EnvVar $Name
+    }
+}
+
 # Validate mandatory parameter
 if (-not $ScriptPath) {
     Write-Error 'ScriptPath is required.'
@@ -60,21 +72,7 @@ try {
 } catch {
     Write-Error $_
     $exitCode = 1
-}
-
-function Restore-EnvVar {
-    param(
-        [string]$Name,
-        [string]$OldValue
-    )
-    if ($OldValue) {
-        Set-EnvVar $Name $OldValue
-    } else {
-        Remove-EnvVar $Name
-    }
-}
-
-finally {
+} finally {
     # Restore WSL_SKIP_DIST
     if ($PSBoundParameters.ContainsKey('WSLSkipDist')) {
         Restore-EnvVar -Name 'WSL_SKIP_DIST' -OldValue $oldSkipDist
