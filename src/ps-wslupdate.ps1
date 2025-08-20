@@ -43,12 +43,13 @@ try {
         $parts[0].Trim()
     }
 
+    $dateStr = Get-DateString
+    $processLog = Join-Path $logFolder "Wsl update $dateStr.log"
+
     foreach ($distro in $distros) {
-        $dateStr = Get-DateString
         if ($skipDist -contains $distro) {
             # Log skipped distribution
-            $skipLog = Join-Path $logFolder "Wsl update $dateStr.log"
-            "Skipped: $distro" | Out-File -FilePath $skipLog -Encoding UTF8 -Append
+            "Skipped: $distro" | Out-File -FilePath $processLog -Encoding UTF8 -Append
             # Manage log retention for skipped logs
             $skipLogs = Get-ChildItem -Path $logFolder -Filter 'Wsl update *.log' | Sort-Object Name
             if ($skipLogs.Count -gt 10) {
@@ -57,6 +58,9 @@ try {
             }
             continue
         }
+
+        # Log updated distribution
+        "Updating: $distro" | Out-File -FilePath $processLog -Encoding UTF8 -Append
         # Run update command in WSL as root
         $logFile = Join-Path $logFolder "$distro $dateStr.log"
         $updateCmd = "wsl.exe -d '$distro' -u root -- bash -c 'apt update && echo && apt upgrade -y'"
