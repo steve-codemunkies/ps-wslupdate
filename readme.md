@@ -2,6 +2,9 @@
 
 A script to update all WSL distributions from the Windows Task Scheduler.
 
+> [!NOTE]
+> Blog post: [Updating WSL on Login](https://www.codemunki.es/2025/08/26/updating-wsl-on-login/).
+
 ## Core script
 
 The core script is [`ps-wslupdate.ps1`](./src/ps-wslupdate.ps1). This does not expect parameters, but does require environment variables to be configured:
