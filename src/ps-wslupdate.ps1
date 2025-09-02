@@ -8,6 +8,19 @@ function Get-DateString {
     return (Get-Date -Format 'yyyyMMddHHmmss')
 }
 
+function Output-DateString {
+    return (Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
+}
+
+function Output-LogAndHost {
+    param (
+        [string]$Message,
+        [string]$ProcessLog
+    )
+    $Message | Out-File -FilePath $ProcessLog -Encoding UTF8 -Append
+    Write-Host $Message
+}
+
 # Get exclusion list from environment variable
 $skipDistRaw = [Environment]::GetEnvironmentVariable('WSL_SKIP_DIST')
 $skipDist = if ([string]::IsNullOrWhiteSpace($skipDistRaw)) { @() } else { $skipDistRaw -split ':' }
@@ -49,7 +62,8 @@ try {
     foreach ($distro in $distros) {
         if ($skipDist -contains $distro) {
             # Log skipped distribution
-            "Skipped: $distro" | Out-File -FilePath $processLog -Encoding UTF8 -Append
+            Output-LogAndHost -Message "$(Output-DateString) Skipped: $distro" -ProcessLog $processLog
+            
             # Manage log retention for skipped logs
             $skipLogs = Get-ChildItem -Path $logFolder -Filter 'Wsl update *.log' | Sort-Object Name
             if ($skipLogs.Count -gt 10) {
@@ -60,12 +74,19 @@ try {
         }
 
         # Log updated distribution
-        "Updating: $distro" | Out-File -FilePath $processLog -Encoding UTF8 -Append
+        Output-LogAndHost -Message "$(Output-DateString) Updating: $distro" -ProcessLog $processLog
+
         # Run update command in WSL as root
         $logFile = Join-Path $logFolder "$distro $dateStr.log"
         $updateCmd = "wsl.exe -d '$distro' -u root -- bash -c 'apt update && echo && apt upgrade -y'"
-        $output = Invoke-Expression $updateCmd 2>&1
-        $output | Out-File -FilePath $logFile -Encoding UTF8
+        $executionData = Measure-Command {
+            $output = Invoke-Expression $updateCmd 2>&1
+            $output | Out-File -FilePath $logFile -Encoding UTF8
+        }
+
+        # Output data on the execution time
+        Output-LogAndHost -Message "$(Output-DateString) Updated: $distro (Execution Time: $($executionData.TotalSeconds) seconds)" -ProcessLog $processLog
+
         # Manage log retention for distro logs
         $distroLogs = Get-ChildItem -Path $logFolder -Filter "$distro *.log" | Sort-Object Name
         if ($distroLogs.Count -gt 10) {
